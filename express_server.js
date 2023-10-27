@@ -57,9 +57,19 @@ app.get("/urls/:id", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id]
-  res.redirect(longURL);
+
+  if (urlDatabase[req.params.id]) {
+    res.redirect(longURL);
+  } else {
+    res.redirect('/404');
+  }
+
 });
 
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
+});
+
+app.get("/404", (req, res) => {
+  res.send("<html><body<h1>404: Not Found</h1></body></html>\n");
 });
