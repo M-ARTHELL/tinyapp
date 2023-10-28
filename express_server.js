@@ -97,6 +97,13 @@ app.post("/logout", (req, res) => {
   res.redirect('/urls');
 })
 
+app.get("/register", (req, res) => {
+  const templateVars = {
+    username: req.cookies["username"]
+  };
+  res.render("registration", templateVars);
+})
+
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
