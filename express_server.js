@@ -20,6 +20,28 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+}
+
+const emailUsed = function (email) {
+  for (const user in users) {
+
+    if (users[user].email === email) {
+      return true;
+    }
+  }
+}
+
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -39,7 +61,7 @@ app.get("/urls.json", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
-    username: req.cookies["username"]
+    user_id: req.cookies["user_id"]
   };
   res.render("urls_index", templateVars);
 });
@@ -52,7 +74,7 @@ app.post("/urls", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"]
+    user_id: req.cookies["user_id"]
   }
   res.render("urls_new", templateVars);
 });
@@ -61,7 +83,7 @@ app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id],
-    username: req.cookies["username"]
+    user_id: req.cookies["user_id"]
   };
   res.render("urls_show", templateVars);
 })
@@ -88,20 +110,43 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  res.cookie("username", req.body.username);
+  res.cookie("user_id", req.body.user_id);
   res.redirect('/urls');
 })
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect('/urls');
 })
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"]
+    user_id: req.cookies["user_id"]
   };
   res.render("registration", templateVars);
+})
+
+app.post("/register", (req, res) => {
+  const randomID = generateRandomString();
+
+  if (req.body.email && req.body.password) {
+
+    if (emailUsed(req.body.email) === true) {
+        res.status(400).send(`Email ${req.body.email} already in use`)
+    } else {
+      users[randomID] = {
+        id: randomID,
+        email: req.body.email,
+        password: req.body.password,
+      }
+  
+      res.cookie('user_id', randomID)
+      res.redirect('/urls')
+    }
+
+  } else {
+    res.status(400).send("Form missing input")
+  }
 })
 
 app.get("/hello", (req, res) => {
@@ -109,5 +154,5 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/404", (req, res) => {
-  res.send("<html><body<h1>404: Not Found</h1></body></html>\n");
+  res.send("<html><body><h1>404: Not Found</h1></body></html>\n");
 });
