@@ -21,8 +21,8 @@
       </div>
     </div>
 
-    <% if (username) { %>
-      <p>Logged in as: <%= username %></p>
+    <% if (user_id) { %>
+      <p>Logged in as: <%= user_id %></p>
       <form method="post" action="/logout">
         <input type = "submit" value = "Logout">
       </form>
@@ -30,7 +30,7 @@
       <form class = "form-inline" action = "/login" method="POST">
         <input
           type = "text"
-          name = "username"
+          name = "user_id"
           placeholder = "Username"
           style = "margin-right: 10px;"
         />
