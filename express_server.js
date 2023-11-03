@@ -33,13 +33,14 @@ const users = {
   },
 }
 
-const emailUsed = function (email) {
+const findUser = function (email) {
   for (const user in users) {
 
     if (users[user].email === email) {
-      return true;
+      return user;
     }
   }
+  return false;
 }
 
 
@@ -109,9 +110,35 @@ app.get("/u/:id", (req, res) => {
 
 });
 
+app.get("/login", (req, res) => {
+  const templateVars = {
+    user_id: req.cookies["user_id"]
+  };
+
+  res.render("login", templateVars);
+})
+
 app.post("/login", (req, res) => {
-  res.cookie("user_id", req.body.user_id);
-  res.redirect('/urls');
+
+  if (req.body.email && req.body.password) {
+    let userID = findUser(req.body.email);
+
+    if (userID === false) {
+      res.status(400).send("User does not exist")
+      
+    } else if (users[userID].email === req.body.email) {
+
+      if (users[userID].password === req.body.password) {
+        res.cookie('user_id', userID)
+        res.redirect('/urls')
+
+      } else {
+        res.status(400).send("Incorrect password")
+      }
+    }
+  } else {
+  res.status(400).send("Form missing input")
+  }
 })
 
 app.post("/logout", (req, res) => {
@@ -130,18 +157,19 @@ app.post("/register", (req, res) => {
   const randomID = generateRandomString();
 
   if (req.body.email && req.body.password) {
+    const userID = findUser(req.body.email)
 
-    if (emailUsed(req.body.email) === true) {
-        res.status(400).send(`Email ${req.body.email} already in use`)
-    } else {
+    if (userID === false) {
       users[randomID] = {
         id: randomID,
         email: req.body.email,
         password: req.body.password,
       }
-  
       res.cookie('user_id', randomID)
       res.redirect('/urls')
+
+    } else if (users[userID].email === req.body.email) {
+        res.status(400).send(`Email ${req.body.email} already in use`)
     }
 
   } else {
