@@ -9,7 +9,7 @@
 
     <title>User Registration</title>
 
-    <!--Bootstrap CSS-->
+    <!-- bootstrap css -->
     <link
     rel = "stylesheet"
     href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
@@ -19,24 +19,29 @@
   </head>
 
   <body>
-    <!--Header-->
+    <!-- header -->
     <%- include('partials/_header') %>
 
-    <!--Registration form-->
+    <!-- registration form -->
+    <h2 style="margin: 10px">Create Account</h2>
     <form method = "post" action = "/register">
-      <label for = "email">Email:</label>
+      <label for = "email" style="margin-left: 10px">Email:</label><br>
       <input
       type = "email"
       name = "email"
+      placeholder = "Email address"
+      style = "margin-left: 10px;"
       /><br>
 
-      <label for = "password">Password:</label>
+      <label for = "password" style="margin-left: 10px">Password:</label><br>
       <input
       type = "password"
       name = "password"
+      placeholder = "Password"
+      style = "margin-left: 10px;"
       /><br>
 
-      <button type = "submit" class = "btn btn-primary">Submit</button>
+      <button type = "submit" class = "btn btn-primary" style = "margin: 15px";">Submit</button>
     </form>
   </body>
 </html>
