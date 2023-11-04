@@ -22,18 +22,16 @@
     </div>
 
       <% if (user_id) { %>
-        <p>Logged in as: <%= user_id %></p>
+        <span class = "navbar-text" style="color: black; margin-right: 10px;">Logged in as: <%= user_id %></span>
+        
         <form method="post" action="/logout">
-          <input type = "submit" value = "Logout">
+          <input type = "submit" class = "btn btn-outline-dark" value = "Logout">
         </form>
       <% } else { %>
-        <form method="GET" action="/register">
-          <input type = "submit" class = "btn btn-primary" value = "Register">
-        </form>
-  
-        <form method="GET" action="/login">
-          <input type = "submit" class = "btn btn-primary" value = "Login">
-        </form>
+        <div class = "navbar-nav">
+          <a class = "nav-item nav-link" href = "/login">Login</a>
+          <a class = "nav-item nav-link" href = "/register">Register</a>
+        </div>
       <% } %>
   </nav>
 </header>
