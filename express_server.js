@@ -45,10 +45,10 @@ const findUser = function (email) {
 
 // returns urls that contain the user ID used as a parameter
 const urlsForUser = function(id) {
-  let usersUrls = [];
+  let usersUrls = {};
   for (const urlID in urlDatabase) {
     if (urlDatabase[urlID].userID === id) {
-      usersUrls.push(urlDatabase[urlID].userID);
+      usersUrls[urlID] = urlDatabase[urlID];
     }
   }
   return usersUrls;
@@ -96,15 +96,20 @@ app.get("/", (req, res) => {
 
 // url listing
 app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
+  res.json(urlsForUser(req.cookies["user_id"]));
 });
 
 app.get("/urls", (req, res) => {
   const templateVars = {
-    urls: urlDatabase,
+    urls: urlsForUser(req.cookies["user_id"]),
     user_id: req.cookies["user_id"]
   };
-  res.render("urls_index", templateVars);
+
+  if (req.cookies["user_id"]) {
+    res.render("urls_index", templateVars);
+  } else {
+    res.status(400).send("Please login first")
+  }
 });
 
 
@@ -140,20 +145,40 @@ app.get("/urls/:id", (req, res) => {
     longURL: urlDatabase[req.params.id].longURL,
     user_id: req.cookies["user_id"]
   };
-  
-  res.render("urls_show", templateVars);
+
+  if (req.cookies["user_id"] === urlDatabase[req.params.id].userID) {
+    res.render("urls_show", templateVars);
+  } else {
+    res.status(400).send("Please login first")
+  }
 })
 
 app.post("/urls/:id/", (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL;
-  res.redirect("/urls")
+  if (req.cookies["user_id"]) {
+    if (req.cookies["user_id"] === urlDatabase[req.params.id].userID) {
+      urlDatabase[req.params.id].longURL = req.body.longURL;
+      res.redirect("/urls")
+    } else {
+      res.status(400).send("Cannot edit another user's URL")
+    }
+  } else {
+    res.status(400).send("Please login first")
+  }
 })
 
 
 // delete url
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
-  res.redirect('/urls');
+  if (req.cookies["user_id"]) {
+    if (req.cookies["user_id"] === urlDatabase[req.params.id].userID) {
+      delete urlDatabase[req.params.id];
+      res.redirect('/urls');
+    } else {
+      res.status(400).send("Cannot delete another user's URL")
+    }
+  } else {
+    res.status(400).send("Please login first")
+  }
 })
 
 
