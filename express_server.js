@@ -2,9 +2,10 @@
 // SETUP
 ///////////////////////////////////////////////////////////
 
-const { render } = require("ejs");
+const {render} = require("ejs");
 const express = require("express");
 const cookieSession = require("cookie-session");
+const {getUserByEmail, generateRandomString, urlsForUser} = require("./helpers")
 const bcrypt = require("bcryptjs");
 
 const app = express();
@@ -17,51 +18,15 @@ app.use(cookieSession({
   name: 'session',
   keys: [cookieKey],
 
-  // Cookie Options
+  // cookie Options
   maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}))
+}));
 
 // listing for requests on port specified by variable, prints it in console
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-
-///////////////////////////////////////////////////////////
-// FUNCTIONS
-///////////////////////////////////////////////////////////
-
-// generates a random 6 character string
-function generateRandomString() {
-  let result = "";
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  while (result.length < 6) {
-    result += chars[Math.floor(Math.random () * ((chars.length - 1) + 1)) + 0];
-  }
-  return result;
-}
-
-// finds user in user datbase and returns the associated key, returns false if email does not exist
-const findUser = function (email) {
-  for (const user in users) {
-
-    if (users[user].email === email) {
-      return user;
-    }
-  }
-  return false;
-}
-
-// returns urls that contain the user ID used as a parameter
-const urlsForUser = function(id) {
-  let usersUrls = {};
-  for (const urlID in urlDatabase) {
-    if (urlDatabase[urlID].userID === id) {
-      usersUrls[urlID] = urlDatabase[urlID];
-    }
-  }
-  return usersUrls;
-}
 
 ///////////////////////////////////////////////////////////
 // DATABASES
@@ -97,21 +62,21 @@ const users = {
 // ROUTES
 ///////////////////////////////////////////////////////////
 
-// welcome page
+// home redirect
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (req.session.user_id) {
+    res.redirect('/urls')
+  } else {
+    res.redirect('/login')
+  }
 });
 
 
 // url listing
-app.get("/urls.json", (req, res) => {
-  res.json(urlsForUser(req.session.user_id));
-});
-
 app.get("/urls", (req, res) => {
   const templateVars = {
-    urls: urlsForUser(req.session.user_id),
-    user_id: req.session.user_id
+    urls: urlsForUser(req.session.user_id, urlDatabase),
+    user: users[req.session.user_id]
   };
 
   if (req.session.user_id) {
@@ -125,7 +90,7 @@ app.get("/urls", (req, res) => {
 // new urls
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    user_id: req.session.user_id
+    user: users[req.session.user_id]
   }
 
   if (req.session.user_id) {
@@ -149,14 +114,25 @@ app.post("/urls", (req, res) => {
 
 // url page
 app.get("/urls/:id", (req, res) => {
-  const templateVars = {
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id].longURL,
-    user_id: req.session.user_id
-  };
+  if (req.session.user_id) {
 
-  if (req.session.user_id === urlDatabase[req.params.id].userID) {
-    res.render("urls_show", templateVars);
+    if (urlDatabase[req.params.id]) {
+
+      // if user is logged in and the link id still exists, compares the current user logged in with the user associated with the link, and loads the page if they match
+      if (req.session.user_id === urlDatabase[req.params.id].userID) {
+        const templateVars = {
+          id: req.params.id,
+          longURL: urlDatabase[req.params.id].longURL,
+          user: users[req.session.user_id]
+        };
+        res.render("urls_show", templateVars);
+
+      } else {
+        res.status(400).send("Cannot view another user's link")
+      }
+    } else {
+      res.status(400).send("URL not found")
+    }
   } else {
     res.status(400).send("Please login first")
   }
@@ -164,11 +140,19 @@ app.get("/urls/:id", (req, res) => {
 
 app.post("/urls/:id/", (req, res) => {
   if (req.session.user_id) {
-    if (req.session.user_id === urlDatabase[req.params.id].userID) {
-      urlDatabase[req.params.id].longURL = req.body.longURL;
-      res.redirect("/urls")
+
+    if (urlDatabase[req.params.id]) {
+
+      // if user is logged in and the link id still exists, compares the current user logged in with the user associated with the link, and proceeds to edit the link if they match
+      if (req.session.user_id === urlDatabase[req.params.id].userID) {
+        urlDatabase[req.params.id].longURL = req.body.longURL;
+        res.redirect("/urls")
+        
+      } else {
+        res.status(400).send("Cannot edit another user's URL")
+      }
     } else {
-      res.status(400).send("Cannot edit another user's URL")
+      res.status(400).send("URL not found")
     }
   } else {
     res.status(400).send("Please login first")
@@ -179,11 +163,19 @@ app.post("/urls/:id/", (req, res) => {
 // delete url
 app.post("/urls/:id/delete", (req, res) => {
   if (req.session.user_id) {
-    if (req.session.user_id === urlDatabase[req.params.id].userID) {
-      delete urlDatabase[req.params.id];
-      res.redirect('/urls');
+
+    if (urlDatabase[req.params.id]) {
+
+            // if user is logged in and the link id still exists, compares the current user logged in with the user associated with the link, and proceeds to delete the link if they match
+      if (req.session.user_id === urlDatabase[req.params.id].userID) {
+        delete urlDatabase[req.params.id];
+        res.redirect('/urls');
+
+      } else {
+        res.status(400).send("Cannot delete another user's URL")
+      }
     } else {
-      res.status(400).send("Cannot delete another user's URL")
+      res.status(400).send("URL not found")
     }
   } else {
     res.status(400).send("Please login first")
@@ -193,10 +185,10 @@ app.post("/urls/:id/delete", (req, res) => {
 
 // redirects short link to long link
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id].longURL
 
   //checks database for short url and redirects to long url if found
   if (urlDatabase[req.params.id]) {
+    const longURL = urlDatabase[req.params.id].longURL
     res.redirect(longURL);
 
   } else {
@@ -209,7 +201,7 @@ app.get("/u/:id", (req, res) => {
 // login
 app.get("/login", (req, res) => {
   const templateVars = {
-    user_id: req.session.user_id
+    user: users[req.session.user_id]
   };
 
   if (req.session.user_id) {
@@ -225,10 +217,10 @@ app.post("/login", (req, res) => {
 
   //checks if email/password forms are filled
   if (req.body.email && req.body.password) {
-    let userID = findUser(req.body.email);
+    let userID = getUserByEmail(req.body.email, users);
 
     // if user doesn't exist in database, send code 403 and "not found" message
-    if (userID === false) {
+    if (userID === undefined) {
       res.status(403).send("User not found")
       
     } else if (users[userID].email === req.body.email) {
@@ -262,7 +254,7 @@ app.post("/logout", (req, res) => {
 // register
 app.get("/register", (req, res) => {
   const templateVars = {
-    user_id: req.session.user_id
+    user: users[req.session.user_id]
   };
 
   if (req.session.user_id) {
@@ -278,10 +270,10 @@ app.post("/register", (req, res) => {
 
   // if email and password forms are filled, check if user already exists in user database
   if (req.body.email && req.body.password) {
-    const userID = findUser(req.body.email)
+    const userID = getUserByEmail(req.body.email, users)
 
     // if user does not exist in database, generate a random string, set it as the key and user id, and set the email and password provided
-    if (userID === false) {
+    if (userID === undefined) {
       const randomID = generateRandomString();
       users[randomID] = {
         id: randomID,
