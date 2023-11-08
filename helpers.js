@@ -14,7 +14,7 @@ function generateRandomString() {
   let result = "";
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   while (result.length < 6) {
-    result += chars[Math.floor(Math.random () * ((chars.length - 1) + 1)) + 0];
+    result += chars[Math.floor(Math.random () * chars.length)];
   }
   return result;
 }
