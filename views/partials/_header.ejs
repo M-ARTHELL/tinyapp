@@ -22,8 +22,8 @@
     </div>
 
       <!-- shows user id and logout button if user is logged in -->
-      <% if (user_id) { %>
-        <span class = "navbar-text" style="color: black; margin-right: 10px;">Logged in as: <%= user_id %></span>
+      <% if (user) { %>
+        <span class = "navbar-text" style="color: black; margin-right: 10px;">Logged in as: <%= user.email %></span>
         
         <form method="post" action="/logout">
           <input type = "submit" class = "btn btn-outline-dark" value = "Logout">
