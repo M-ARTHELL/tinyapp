@@ -14,10 +14,10 @@
   </head>
 
   <body>
-    <!--Header-->
+    <!-- header -->
     <%- include('partials/_header') %>
 
-    <!--Card-->
+    <!-- card -->
     <div class = "card text-center">
       <div class = "card-header"></div>
       <div class = "card-body">
@@ -26,7 +26,8 @@
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
         </p>
       </div>
-      <!--EDIT-->
+
+      <!-- edit-->
       <div class = "card-footer text-muted">
       <h3>Edit:</h3>
       <form action = "/urls/<%= id %>/" method="POST">
@@ -41,7 +42,7 @@
     </div>
     </div>
 
-    <!--Bootstrap JS-->
+    <!-- bootstrap js -->
     <script
       src = "https://code.jquery.com/jquery-3.3.1.slim.min.js"
       integrity = "sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
